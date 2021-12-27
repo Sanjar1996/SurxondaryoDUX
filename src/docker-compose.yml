@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  surxondaryodb:
+    container_name: surxondaryodb
+    image: postgres
+    environment:
+      POSTGRES_DB: db_surxondaryo
+      POSTGRES_USER: surxondaryouser
+      POSTGRES_PASSWORD: surxondaryopass
+    volumes:
+      - postgres_data:/var/lib/postgresql/datasurxondaryo/
+    ports:
+      - "5432:5432"
+  surxondaryoweb:
+    container_name: surxondaryo
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    depends_on:
+      - surxondaryodb
+    env_file:
+      - ./.env.dev
+
+volumes:
+  postgres_data:

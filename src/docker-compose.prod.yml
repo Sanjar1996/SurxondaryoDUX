@@ -1,0 +1,57 @@
+version: '2'
+
+services:
+  surxondaryodb_prod:
+    container_name: surxondaryodb_prod
+    restart: always
+    image: postgres:12.2
+    environment:
+      POSTGRES_DB: db_surxondaryo_prod
+      POSTGRES_USER: surxondaryouser_prod
+      POSTGRES_PASSWORD: surxondaryopass_prod
+    networks:
+      - surxondaryo-network
+    volumes:
+        - surxondaryodata:/var/lib/postgresql/surxondaryodata/
+
+  surxondaryoweb_prod:
+    container_name: surxondaryoweb_prod
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:2828
+    volumes:
+      - static_volume_surxondaryo:/home/app/web/static
+      - media_volume_surxondaryo:/home/app/web/media
+    networks:
+      - surxondaryo-network
+    depends_on:
+      - surxondaryodb_prod
+    ports:
+      - "2828:2828"
+    env_file:
+      - ./.env.prod
+
+  surxondaryonginx:
+    container_name: surxondaryo-nginx
+    restart: always
+    build: ./nginx
+    volumes:
+      - static_volume_surxondaryo:/home/app/web/static
+      - media_volume_surxondaryo:/home/app/web/media
+    ports:
+      - "4848:4848"
+    networks:
+      - surxondaryo-network
+    depends_on:
+      - surxondaryoweb_prod
+
+volumes:
+  surxondaryodata:
+  static_volume_surxondaryo:
+  media_volume_surxondaryo:
+
+networks:
+  surxondaryo-network:
+    driver: bridge
